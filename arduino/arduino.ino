@@ -28,7 +28,7 @@ const int buttons = sizeof(button_pins)/sizeof(int);
 const int siren_pin = A5;
 
 int current_segment = 0;
-const int multiplex_rate = 400;
+const int multiplex_rate = 50;
 const int multiplex_delay = 1000 / multiplex_rate;
 
 bool ticking = true;
@@ -45,6 +45,10 @@ void setup() {
 
     for(int i=0; i < 7; i++) {
       pinMode(number_pins[i], OUTPUT);
+    }
+    
+    for(int i=0; i < buttons; i++) {
+      pinMode(button_pins[i], INPUT);
     }
 }
 
@@ -97,7 +101,6 @@ unsigned long elapsed() {
 }
 
 void update() {
-  Serial.println(elapsed());
     remaining = timer - elapsed();
 
     int miliseconds = remaining % 1000;
@@ -120,12 +123,20 @@ void show_segment(int segment) {
     activate_segment(segment);
 }
 
+int read_button(int button) {
+    int pin = button_pins[button];
+    int value = analogRead(pin);
+    return value;
+}
 
 void multiplex() {
     for(int i=0; i < multiplex_rate; i++) {
         show_segment(current_segment);
         current_segment = next_segment();
         delay(multiplex_delay);
+for(int j=0; j < buttons; j++) {
+  Serial << "Button: " << j << " = " << read_button(j);
+}
     }
 }
 
