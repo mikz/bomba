@@ -50,12 +50,12 @@ void setup() {
     for(int i=0; i < buttons; i++) {
       pinMode(button_pins[i], INPUT);
     }
-}
+};
 
 void loop() {
   if(started)
     tick();
-}
+};
 
 void tick() {
     if(remaining <= 0) {
@@ -75,7 +75,7 @@ void tick() {
         multiplex();
         beep();
     }
-}
+};
 
 int next_segment() {
     int next_segment = current_segment + 1;
@@ -84,7 +84,7 @@ int next_segment() {
     } else {
         return next_segment;
     }
-}
+};
 
 void update_clock(int first, int second, int third) {
     Serial << first << ":" << second << ":" << third << "\n";
@@ -94,11 +94,11 @@ void update_clock(int first, int second, int third) {
     numbers[3] = second % 10;
     numbers[4] = third / 10;
     numbers[5] = third % 10;
-}
+};
 
 unsigned long elapsed() {
   return millis() - boot;
-}
+};
 
 void update() {
     remaining = timer - elapsed();
@@ -115,19 +115,21 @@ void update() {
     } else { // show minutes:seconds:miliseconds 
       update_clock(minutes, seconds, miliseconds / 100);
     }
-}
+};
 
 void show_segment(int segment) {
+    Serial << "Showing segment: " << segment << "\n";
+  
     fade_segments();
     show_number(numbers[segment]);
-    activate_segment(segment);
-}
+    turn_on(segment);
+};
 
 int read_button(int button) {
     int pin = button_pins[button];
     int value = analogRead(pin);
     return value;
-}
+};
 
 void multiplex() {
     for(int i=0; i < multiplex_rate; i++) {
@@ -135,27 +137,35 @@ void multiplex() {
         current_segment = next_segment();
         delay(multiplex_delay);
 for(int j=0; j < buttons; j++) {
-  Serial << "Button: " << j << " = " << read_button(j);
+  Serial << "Button: " << j << " = " << read_button(j) << "\n";
 }
     }
-}
+};
 
 void show_number(int number) {
+    Serial << "Showing number: " << number << "\n";
     for(int i=0; i < 7; i++) {
-        digitalWrite(i + 4, segment_numbers[number][i]);
-    }
-   
-}
+      int pin = segment_pins[i];
+      bool on = segment_numbers[number][i];
+      on ? turn_on(pin) : turn_off(pin);
+    }  
+};
 
 void fade_segments() {
     for(int i=0; i <  sizeof(segment_pins)/sizeof(int); i++) {
-        digitalWrite(segment_pins[i], LOW);
+      turn_off(segment_pins[i]);
     }
-}
+};
 
-void activate_segment(int segment) {
-    digitalWrite(segment, HIGH);
-}
+void turn_on(int pin) {
+  digitalWrite(pin, HIGH);
+  Serial << "Turn ON pin: " << pin << "\n";
+};
+
+void turn_off(int pin) {
+  digitalWrite(pin, LOW);
+  Serial << "Turn OFF pin: " << pin << "\n";
+};
 
 void beep() {
-}
+};
