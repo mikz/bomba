@@ -122,7 +122,7 @@ void show_segment(int segment) {
   
     fade_segments();
     show_number(numbers[segment]);
-    turn_on(segment);
+    turn_on(segment_pins[segment]);
 };
 
 int read_button(int button) {
