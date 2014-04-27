@@ -169,7 +169,7 @@ void multiplex() {
 
 void show_number(int number) {
     Serial << "Showing number: " << number << "\n";
-    for(int i=0; i < 7; i++) {
+    for(int i=0; i < segments; i++) {
       int pin = segment_pins[i];
       bool on = segment_numbers[number][i];
       on ? turn_on(pin) : turn_off(pin);
