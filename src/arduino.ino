@@ -1,5 +1,5 @@
 // (minutes * 60 + seconds) * 1000 = time in miliseconds
-const unsigned long timer = (0 * 60 + 50) * 1000;
+const unsigned long timer = (90L * 60L + 50L) * 1000L;
 
 // controls wether to print deubbging info to serial port 
 const bool print_pins = true;
@@ -14,7 +14,7 @@ const int button_pins[5] = { A0, A1, A2, A3, A4 };
 const int siren_pin = A5;
 
 // multiplex rate controls how many times to rotate between segments before updating displayed number
-const int multiplex_rate = 50;
+const int multiplex_rate = 6;
 
 // help vars below
 bool ticking = true;
@@ -114,19 +114,20 @@ unsigned long elapsed() {
 
 void update() {
 	unsigned long elps = elapsed();
+
     remaining = timer - elps;
     if(print_clock) {
-	    Serial << "Remaining: " << remaining << " Elapsed: " << elps;
+	    Serial << "Timer: " << timer << " Remaining: " << remaining << " Elapsed: " << elps << "\n";
     }
-    int miliseconds = remaining % 1000;
-    int seconds_left = remaining / 1000;
+    int miliseconds = remaining % 1000L;
+    int seconds_left = remaining / 1000L;
     
-    int hours  =  seconds_left / 3600;
-    int minutes = seconds_left / 60;
-    int seconds = seconds_left % 60;
+    int hours  =  seconds_left / 3600L;
+    int minutes = (seconds_left / 60L) % 60L;
+    int seconds = seconds_left % 60L;
     
     if (print_clock) {
-	    Serial << "Hour: " << hours << " Minutes: " << minutes << " Seconds: " << seconds << " Miliseconds: " << miliseconds;
+	    Serial << "Hour: " << hours << " Minutes: " << minutes << " Seconds: " << seconds << " Miliseconds: " << miliseconds << "\n";
     }
     if (hours > 0) { // show hours:minutes:seconds
       update_clock(hours, minutes, seconds);
