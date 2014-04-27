@@ -2,9 +2,10 @@
 const unsigned long timer = (90L * 60L + 50L) * 1000L;
 
 // controls wether to print deubbging info to serial port 
-const bool print_pins = true;
+const bool print_pins = false;
 const bool print_buttons = false;
 const bool print_clock = true;
+const bool print_segment = true;
 
 // configuration of output/input pins
 const int segment_pins[6] = { 2, 3, 4, 5, 6 };
@@ -137,7 +138,9 @@ void update() {
 };
 
 void show_segment(int segment) {
-    Serial << "Showing segment: " << segment << "\n";
+	if(print_segment) {
+            Serial << "Showing segment: " << segment << "\n";
+	}
   
     fade_segments();
     show_number(display[segment]);
