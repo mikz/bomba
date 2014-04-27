@@ -1,11 +1,12 @@
 // (minutes * 60 + seconds) * 1000 = time in miliseconds
-const unsigned long timer = (90L * 60L + 50L) * 1000L;
+const unsigned long timer = (1L * 60L + 20L) * 1000L;
 
 // controls wether to print deubbging info to serial port 
 const bool print_pins = false;
 const bool print_buttons = false;
 const bool print_clock = true;
 const bool print_segment = true;
+const bool print_blink = true;
 
 // configuration of output/input pins
 const int segment_pins[6] = { 2, 3, 4, 5, 6 };
@@ -16,6 +17,7 @@ const int siren_pin = A5;
 
 // multiplex rate controls how many times to rotate between segments before updating displayed number
 const int multiplex_rate = 6;
+const int blink_pause = 1000; // 1 seconds blink after bomb explodes
 
 // help vars below
 bool ticking = true;
@@ -25,7 +27,7 @@ const int buttons = sizeof(button_pins)/sizeof(int);
 const int segments = sizeof(segment_pins)/sizeof(int);
 const int numbers = sizeof(number_pins)/sizeof(int);
 
-unsigned long int remaining = timer;
+unsigned long remaining = timer;
 
 int current_segment = 0;
 
@@ -72,10 +74,9 @@ void loop() {
 };
 
 void tick() {
-    if(remaining <= 0) {
-        remaining = 0;
-        update();
+    if(remaining == 0) {
         ticking = false;
+        update();
     }
 
     if (ticking) {
@@ -84,6 +85,7 @@ void tick() {
     } else {
         multiplex();
         beep();
+	blink();
     }
 };
 
@@ -116,7 +118,12 @@ unsigned long elapsed() {
 void update() {
 	unsigned long elps = elapsed();
 
-    remaining = timer - elps;
+	if(timer > elps) {
+		remaining = timer - elps;
+	} else {
+		remaining = 0;
+	}
+
     if(print_clock) {
 	    Serial << "Timer: " << timer << " Remaining: " << remaining << " Elapsed: " << elps << "\n";
     }
@@ -133,7 +140,7 @@ void update() {
     if (hours > 0) { // show hours:minutes:seconds
       update_clock(hours, minutes, seconds);
     } else { // show minutes:seconds:miliseconds 
-      update_clock(minutes, seconds, miliseconds / 100);
+      update_clock(minutes, seconds, miliseconds / 10);
     }
 };
 
@@ -164,6 +171,14 @@ void multiplex() {
 			Serial << "Button: " << j << " = " << button_value << "\n";
 		}
         }
+    }
+};
+
+void blink() {
+    fade_segments();
+    delay(blink_pause);
+    if (print_blink) {
+	    Serial << "BOOM! Blink.\n"; 
     }
 };
 
