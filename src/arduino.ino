@@ -3,7 +3,8 @@ const unsigned long timer = (0 * 60 + 50) * 1000;
 
 // controls wether to print deubbging info to serial port 
 const bool print_pins = true;
-const bool print_buttons = true;
+const bool print_buttons = false;
+const bool print_clock = true;
 
 // configuration of output/input pins
 const int segment_pins[6] = { 2, 3, 4, 5, 6 };
@@ -21,12 +22,13 @@ bool started = true;
 
 const int buttons = sizeof(button_pins)/sizeof(int);
 const int segments = sizeof(segment_pins)/sizeof(int);
+const int numbers = sizeof(number_pins)/sizeof(int);
 
 unsigned long int remaining = timer;
 
 int current_segment = 0;
 
-int numbers[6];
+int display[6];
 unsigned long boot;
 
 const byte segment_numbers[10][7] = {
@@ -54,7 +56,7 @@ void setup() {
       pinMode(segment_pins[i], OUTPUT);
     }
 
-    for(int i=0; i < 7; i++) {
+    for(int i=0; i < numbers; i++) {
       pinMode(number_pins[i], OUTPUT);
     }
     
@@ -76,11 +78,7 @@ void tick() {
     }
 
     if (ticking) {
-        
         update();
-        
-        // multiplex loop
-        
         multiplex();
     } else {
         multiplex();
@@ -98,13 +96,16 @@ int next_segment() {
 };
 
 void update_clock(int first, int second, int third) {
-    Serial << first << ":" << second << ":" << third << "\n";
-    numbers[0] = first / 10;
-    numbers[1] = first % 10;
-    numbers[2] = second / 10;
-    numbers[3] = second % 10;
-    numbers[4] = third / 10;
-    numbers[5] = third % 10;
+	if(print_clock) {
+            Serial << first << ":" << second << ":" << third << "\n";
+	}
+
+    display[0] = first / 10;
+    display[1] = first % 10;
+    display[2] = second / 10;
+    display[3] = second % 10;
+    display[4] = third / 10;
+    display[5] = third % 10;
 };
 
 unsigned long elapsed() {
@@ -112,7 +113,11 @@ unsigned long elapsed() {
 };
 
 void update() {
-    remaining = timer - elapsed();
+	unsigned long elps = elapsed();
+    remaining = timer - elps;
+    if(print_clock) {
+	    Serial << "Remaining: " << remaining << " Elapsed: " << elps;
+    }
     int miliseconds = remaining % 1000;
     int seconds_left = remaining / 1000;
     
@@ -120,6 +125,9 @@ void update() {
     int minutes = seconds_left / 60;
     int seconds = seconds_left % 60;
     
+    if (print_clock) {
+	    Serial << "Hour: " << hours << " Minutes: " << minutes << " Seconds: " << seconds << " Miliseconds: " << miliseconds;
+    }
     if (hours > 0) { // show hours:minutes:seconds
       update_clock(hours, minutes, seconds);
     } else { // show minutes:seconds:miliseconds 
@@ -131,7 +139,7 @@ void show_segment(int segment) {
     Serial << "Showing segment: " << segment << "\n";
   
     fade_segments();
-    show_number(numbers[segment]);
+    show_number(display[segment]);
     turn_on(segment);
 };
 
