@@ -144,7 +144,7 @@ void show_segment(int segment) {
   
     fade_segments();
     show_number(display[segment]);
-    turn_on(segment);
+    turn_on(segment_pins[segment]);
 };
 
 int read_button(int button) {
@@ -170,7 +170,7 @@ void multiplex() {
 void show_number(int number) {
     Serial << "Showing number: " << number << "\n";
     for(int i=0; i < segments; i++) {
-      int pin = segment_pins[i];
+      int pin = number_pins[i];
       bool on = segment_numbers[number][i];
       on ? turn_on(pin) : turn_off(pin);
     }  
