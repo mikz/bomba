@@ -166,9 +166,9 @@ void multiplex() {
         current_segment = next_segment();
 
         for(int j=0; j < buttons; j++) {
-		int button_value = read_button(j);
+		// int button_value = read_button(j);
 		if (print_buttons) {
-			Serial << "Button: " << j << " = " << button_value << "\n";
+		//	Serial << "Button: " << j << " = " << button_value << "\n";
 		}
         }
     }
