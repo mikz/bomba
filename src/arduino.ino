@@ -4,9 +4,9 @@ const unsigned long timer = (1L * 60L + 20L) * 1000L;
 // controls wether to print deubbging info to serial port 
 const bool print_pins = false;
 const bool print_buttons = false;
-const bool print_clock = true;
-const bool print_segment = true;
-const bool print_blink = true;
+const bool print_clock = false;
+const bool print_segment = false;
+const bool print_blink = false;
 
 // configuration of output/input pins
 const int segment_pins[6] = { 2, 3, 4, 5, 6 };
