@@ -7,6 +7,7 @@ const bool print_buttons = false;
 const bool print_clock = false;
 const bool print_segment = false;
 const bool print_blink = false;
+const bool print_number = false;
 
 // configuration of output/input pins
 const int segment_pins[6] = { 2, 3, 4, 5, 6 };
@@ -183,7 +184,9 @@ void blink() {
 };
 
 void show_number(int number) {
-    Serial << "Showing number: " << number << "\n";
+    if(print_number) {
+      Serial << "Showing number: " << number << "\n";
+    }
     for(int i=0; i < numbers; i++) {
       int pin = number_pins[i];
       bool on = segment_numbers[number][i];
