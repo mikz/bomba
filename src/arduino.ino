@@ -1,36 +1,47 @@
 // (minutes * 60 + seconds) * 1000 = time in miliseconds
-const unsigned long timer = (1L * 60L + 20L) * 1000L;
+const unsigned long timer = (0L * 60L + 10L) * 1000L;
 
 // controls wether to print deubbging info to serial port 
 const bool print_pins = false;
-const bool print_buttons = false;
+const bool print_buttons = true;
 const bool print_clock = false;
 const bool print_segment = false;
 const bool print_blink = false;
 const bool print_number = false;
 
 // configuration of output/input pins
-const int segment_pins[6] = { 2, 3, 4, 5, 6 };
+const int segment_pins[6] = { 2, 3, 4, 5, 6, 1 };
 const int number_pins[7] = { 7, 8, 9, 10, 11, 12, 13 };
 const int button_pins[5] = { A0, A1, A2, A3, A4 };
+
 
 const int siren_pin = A5;
 
 // multiplex rate controls how many times to rotate between segments before updating displayed number
-const int multiplex_rate = 6;
-const int blink_pause = 1000; // 1 seconds blink after bomb explodes
+const int multiplex_rate = 2000;
+
+const int button_read_freq = multiplex_rate/2;
+
+// blinking after bomb explodes
+const int blink_pause = 300; // turned off delay
+const int blink_multiplex_rate = 2000; // how many iterations before pause
 
 // help vars below
 bool ticking = true;
 bool started = true;
 
+const bool serial = print_pins || print_buttons || print_clock || print_segment || print_blink || print_number;
+
 const int buttons = sizeof(button_pins)/sizeof(int);
 const int segments = sizeof(segment_pins)/sizeof(int);
 const int numbers = sizeof(number_pins)/sizeof(int);
 
+int button_values[buttons] = {};
+
 unsigned long remaining = timer;
 
 int current_segment = 0;
+int current_button = 0;
 
 int display[6];
 unsigned long boot;
@@ -52,7 +63,8 @@ const byte segment_numbers[10][7] = {
 template<class T> inline Print &operator <<(Print &obj, T arg) { obj.print(arg); return obj; } 
 
 void setup() {
-    Serial.begin(9600);
+    if (serial)
+      Serial.begin(9600);
     
     boot = millis();
     
@@ -70,8 +82,16 @@ void setup() {
 };
 
 void loop() {
-  if(started)
+  if(started) {
     tick();
+  } else {
+    wait_for_start();
+  }
+};
+
+void wait_for_start() {  
+  started = true;
+  
 };
 
 void tick() {
@@ -82,9 +102,9 @@ void tick() {
 
     if (ticking) {
         update();
-        multiplex();
+        multiplex(multiplex_rate);
     } else {
-        multiplex();
+        multiplex(blink_multiplex_rate);
         beep();
 	blink();
     }
@@ -155,23 +175,36 @@ void show_segment(int segment) {
     turn_on(segment_pins[segment]);
 };
 
+int read_next_button() {
+  int next_button = (current_button + 1) % buttons;
+  current_button = next_button;
+  int button_value = read_button(current_button);
+      if (print_buttons) {
+          Serial << "Button: " << current_button << " = " << button_value << "\n";
+      }
+  return button_value;
+};
+
 int read_button(int button) {
     int pin = button_pins[button];
     int value = analogRead(pin);
     return value;
 };
 
-void multiplex() {
-    for(int i=0; i < multiplex_rate; i++) {
+void read_buttons() {
+ // for(int j=0; j < buttons; j++) {
+    int value = read_next_button();
+ // }
+};
+
+void multiplex(int rate) {
+    for(int i=0; i < rate; i++) {
         show_segment(current_segment);
         current_segment = next_segment();
 
-        for(int j=0; j < buttons; j++) {
-		// int button_value = read_button(j);
-		if (print_buttons) {
-		//	Serial << "Button: " << j << " = " << button_value << "\n";
-		}
-        }
+      if(i%button_read_freq == 0)
+        read_buttons();
+        
     }
 };
 
