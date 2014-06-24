@@ -12,7 +12,7 @@ const bool print_number = false;
 // configuration of output/input pins
 const int segment_pins[6] = { 2, 3, 4, 5, 6, 1 };
 const int number_pins[7] = { 7, 8, 9, 10, 11, 12, 13 };
-const int button_pins[5] = { A0, A1, A2, A3, A4 };
+const int button_pins[5] = { A0, A1, A2, A3, A4, A5 };
 
 
 const int siren_pin = A5;
