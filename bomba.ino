@@ -328,8 +328,22 @@ void wrong_code_penalty()
 	penalty += wrong_code_penalty_minutes * 60L * 1000L;
 }
 
+void reset_code()
+{
+		code_position = 0;
+		beep(200);
+		delay(200);
+		beep(200);
+		return;
+}
+
 void try_code(int number)
 {
+	if (number == 11 || number == 10) {
+		return reset_code();
+		
+	}
+
 	bool valid;
 	int expected = valid_code[code_position++];
 
