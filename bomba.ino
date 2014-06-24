@@ -70,7 +70,9 @@ template<class T> inline Print &operator <<(Print &obj, T arg)
 void setup()
 {
     if (serial)
+    {
         Serial.begin(9600);
+    }
 
     boot = millis();
 
@@ -132,6 +134,7 @@ void tick()
 int next_segment()
 {
     int next_segment = current_segment + 1;
+
     if (next_segment >= segments)
     {
         return 0;
@@ -179,6 +182,7 @@ void update()
     {
         Serial << "Timer: " << timer << " Remaining: " << remaining << " Elapsed: " << elps << "\n";
     }
+
     int miliseconds = remaining % 1000L;
     int seconds_left = remaining / 1000L;
 
@@ -190,6 +194,7 @@ void update()
     {
         Serial << "Hour: " << hours << " Minutes: " << minutes << " Seconds: " << seconds << " Miliseconds: " << miliseconds << "\n";
     }
+
     if (hours > 0)   // show hours:minutes:seconds
     {
         update_clock(hours, minutes, seconds);
@@ -217,10 +222,12 @@ int read_next_button()
     int next_button = (current_button + 1) % buttons;
     current_button = next_button;
     int button_value = read_button(current_button);
+
     if (print_buttons)
     {
         Serial << "Button: " << current_button << " = " << button_value << "\n";
     }
+
     return button_value;
 };
 
@@ -246,7 +253,9 @@ void multiplex(int rate)
         current_segment = next_segment();
 
         if(i%button_read_freq == 0)
+        {
             read_buttons();
+        }
 
     }
 };
@@ -255,6 +264,7 @@ void blink()
 {
     fade_segments();
     delay(blink_pause);
+
     if (print_blink)
     {
         Serial << "BOOM! Blink.\n";
@@ -267,6 +277,7 @@ void show_number(int number)
     {
         Serial << "Showing number: " << number << "\n";
     }
+
     for(int i=0; i < numbers; i++)
     {
         int pin = number_pins[i];
@@ -286,6 +297,7 @@ void fade_segments()
 void turn_on(int pin)
 {
     digitalWrite(pin, HIGH);
+
     if (print_pins)
     {
         Serial << "Turn ON pin: " << pin << "\n";
@@ -295,6 +307,7 @@ void turn_on(int pin)
 void turn_off(int pin)
 {
     digitalWrite(pin, LOW);
+
     if (print_pins)
     {
         Serial << "Turn OFF pin: " << pin << "\n";
