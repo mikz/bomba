@@ -98,8 +98,6 @@ void setup()
         Serial.begin(9600);
     }
 
-    boot = millis();
-
     pinMode(siren_pin, OUTPUT);
     digitalWrite(siren_pin, LOW);
 
@@ -135,12 +133,18 @@ void wait_for_start()
 {
     int button;
 
+    int hours, minutes, seconds, miliseconds;
+    extract_clock(timer, hours, minutes, seconds, miliseconds);
+    update_clock(hours, minutes, seconds);
+
     do
     {
         multiplex(1);
         button = read_next_button();
     }
     while (button == -1);
+
+    boot = millis();
 
     started = true;
     ticking = true;
@@ -206,6 +210,22 @@ unsigned long elapsed()
     return millis() - boot + penalty;
 };
 
+void extract_clock(long time, int &hours, int &minutes, int &seconds, int &miliseconds)
+{
+    int seconds_left = time / 1000L;
+    miliseconds = time % 1000L;
+
+    hours  =  seconds_left / 3600L;
+    minutes = (seconds_left / 60L) % 60L;
+    seconds = seconds_left % 60L;
+
+    if (print_clock)
+    {
+        Serial << "Hour: " << hours << " Minutes: " << minutes << " Seconds: " << seconds << " Miliseconds: " << miliseconds << "\n";
+    }
+
+};
+
 void update()
 {
     unsigned long elps = elapsed();
@@ -224,17 +244,8 @@ void update()
         Serial << "Timer: " << timer << " Remaining: " << remaining << " Elapsed: " << elps << "\n";
     }
 
-    int miliseconds = remaining % 1000L;
-    int seconds_left = remaining / 1000L;
-
-    int hours  =  seconds_left / 3600L;
-    int minutes = (seconds_left / 60L) % 60L;
-    int seconds = seconds_left % 60L;
-
-    if (print_clock)
-    {
-        Serial << "Hour: " << hours << " Minutes: " << minutes << " Seconds: " << seconds << " Miliseconds: " << miliseconds << "\n";
-    }
+    int hours, minutes, seconds, miliseconds;
+    extract_clock(remaining, hours, minutes, seconds, miliseconds);
 
     if (hours > 0)   // show hours:minutes:seconds
     {
