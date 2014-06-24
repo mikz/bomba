@@ -1,7 +1,7 @@
 // (minutes * 60 + seconds) * 1000 = time in miliseconds
 const unsigned long timer = (0L * 60L + 10L) * 1000L;
 
-// controls wether to print deubbging info to serial port 
+// controls wether to print debugging info to serial port
 const bool print_pins = false;
 const bool print_buttons = true;
 const bool print_clock = false;
@@ -46,7 +46,8 @@ int current_button = 0;
 int display[6];
 unsigned long boot;
 
-const byte segment_numbers[10][7] = {
+const byte segment_numbers[10][7] =
+{
     { 1,1,1,1,1,1,0 },  // = 0
     { 0,1,1,0,0,0,0 },  // = 1
     { 1,1,0,1,1,0,1 },  // = 2
@@ -60,69 +61,93 @@ const byte segment_numbers[10][7] = {
 };
 
 // enable Serial << streaming
-template<class T> inline Print &operator <<(Print &obj, T arg) { obj.print(arg); return obj; } 
+template<class T> inline Print &operator <<(Print &obj, T arg)
+{
+    obj.print(arg);
+    return obj;
+}
 
-void setup() {
+void setup()
+{
     if (serial)
-      Serial.begin(9600);
-    
+        Serial.begin(9600);
+
     boot = millis();
-    
-    for(int i=0; i < segments; i++) {
-      pinMode(segment_pins[i], OUTPUT);
+
+    for(int i=0; i < segments; i++)
+    {
+        pinMode(segment_pins[i], OUTPUT);
     }
 
-    for(int i=0; i < numbers; i++) {
-      pinMode(number_pins[i], OUTPUT);
+    for(int i=0; i < numbers; i++)
+    {
+        pinMode(number_pins[i], OUTPUT);
     }
-    
-    for(int i=0; i < buttons; i++) {
-      pinMode(button_pins[i], INPUT);
+
+    for(int i=0; i < buttons; i++)
+    {
+        pinMode(button_pins[i], INPUT);
     }
 };
 
-void loop() {
-  if(started) {
-    tick();
-  } else {
-    wait_for_start();
-  }
+void loop()
+{
+    if(started)
+    {
+        tick();
+    }
+    else
+    {
+        wait_for_start();
+    }
 };
 
-void wait_for_start() {  
-  started = true;
-  
+void wait_for_start()
+{
+    started = true;
+
 };
 
-void tick() {
-    if(remaining == 0) {
+void tick()
+{
+    if(remaining == 0)
+    {
         ticking = false;
         update();
     }
 
-    if (ticking) {
+    if (ticking)
+    {
         update();
         multiplex(multiplex_rate);
-    } else {
+    }
+    else
+    {
         multiplex(blink_multiplex_rate);
         beep();
-	blink();
+        blink();
     }
 };
 
-int next_segment() {
+int next_segment()
+{
     int next_segment = current_segment + 1;
-    if (next_segment >= segments) {
+    if (next_segment >= segments)
+    {
         return 0;
-    } else {
+    }
+    else
+    {
         return next_segment;
     }
 };
 
-void update_clock(int first, int second, int third) {
-	if(print_clock) {
-            Serial << first << ":" << second << ":" << third << "\n";
-	}
+void update_clock(int first, int second, int third)
+{
+    if(print_clock)
+    {
+        Serial << first << ":" << second << ":" << third << "\n";
+    }
 
     display[0] = first / 10;
     display[1] = first % 10;
@@ -132,120 +157,150 @@ void update_clock(int first, int second, int third) {
     display[5] = third % 10;
 };
 
-unsigned long elapsed() {
-  return millis() - boot;
+unsigned long elapsed()
+{
+    return millis() - boot;
 };
 
-void update() {
-	unsigned long elps = elapsed();
+void update()
+{
+    unsigned long elps = elapsed();
 
-	if(timer > elps) {
-		remaining = timer - elps;
-	} else {
-		remaining = 0;
-	}
+    if(timer > elps)
+    {
+        remaining = timer - elps;
+    }
+    else
+    {
+        remaining = 0;
+    }
 
-    if(print_clock) {
-	    Serial << "Timer: " << timer << " Remaining: " << remaining << " Elapsed: " << elps << "\n";
+    if(print_clock)
+    {
+        Serial << "Timer: " << timer << " Remaining: " << remaining << " Elapsed: " << elps << "\n";
     }
     int miliseconds = remaining % 1000L;
     int seconds_left = remaining / 1000L;
-    
+
     int hours  =  seconds_left / 3600L;
     int minutes = (seconds_left / 60L) % 60L;
     int seconds = seconds_left % 60L;
-    
-    if (print_clock) {
-	    Serial << "Hour: " << hours << " Minutes: " << minutes << " Seconds: " << seconds << " Miliseconds: " << miliseconds << "\n";
+
+    if (print_clock)
+    {
+        Serial << "Hour: " << hours << " Minutes: " << minutes << " Seconds: " << seconds << " Miliseconds: " << miliseconds << "\n";
     }
-    if (hours > 0) { // show hours:minutes:seconds
-      update_clock(hours, minutes, seconds);
-    } else { // show minutes:seconds:miliseconds 
-      update_clock(minutes, seconds, miliseconds / 10);
+    if (hours > 0)   // show hours:minutes:seconds
+    {
+        update_clock(hours, minutes, seconds);
+    }
+    else     // show minutes:seconds:miliseconds
+    {
+        update_clock(minutes, seconds, miliseconds / 10);
     }
 };
 
-void show_segment(int segment) {
-	if(print_segment) {
-            Serial << "Showing segment: " << segment << "\n";
-	}
-  
+void show_segment(int segment)
+{
+    if(print_segment)
+    {
+        Serial << "Showing segment: " << segment << "\n";
+    }
+
     fade_segments();
     show_number(display[segment]);
     turn_on(segment_pins[segment]);
 };
 
-int read_next_button() {
-  int next_button = (current_button + 1) % buttons;
-  current_button = next_button;
-  int button_value = read_button(current_button);
-      if (print_buttons) {
-          Serial << "Button: " << current_button << " = " << button_value << "\n";
-      }
-  return button_value;
+int read_next_button()
+{
+    int next_button = (current_button + 1) % buttons;
+    current_button = next_button;
+    int button_value = read_button(current_button);
+    if (print_buttons)
+    {
+        Serial << "Button: " << current_button << " = " << button_value << "\n";
+    }
+    return button_value;
 };
 
-int read_button(int button) {
+int read_button(int button)
+{
     int pin = button_pins[button];
     int value = analogRead(pin);
     return value;
 };
 
-void read_buttons() {
- // for(int j=0; j < buttons; j++) {
+void read_buttons()
+{
+    // for(int j=0; j < buttons; j++) {
     int value = read_next_button();
- // }
+    // }
 };
 
-void multiplex(int rate) {
-    for(int i=0; i < rate; i++) {
+void multiplex(int rate)
+{
+    for(int i=0; i < rate; i++)
+    {
         show_segment(current_segment);
         current_segment = next_segment();
 
-      if(i%button_read_freq == 0)
-        read_buttons();
-        
+        if(i%button_read_freq == 0)
+            read_buttons();
+
     }
 };
 
-void blink() {
+void blink()
+{
     fade_segments();
     delay(blink_pause);
-    if (print_blink) {
-	    Serial << "BOOM! Blink.\n"; 
+    if (print_blink)
+    {
+        Serial << "BOOM! Blink.\n";
     }
 };
 
-void show_number(int number) {
-    if(print_number) {
-      Serial << "Showing number: " << number << "\n";
+void show_number(int number)
+{
+    if(print_number)
+    {
+        Serial << "Showing number: " << number << "\n";
     }
-    for(int i=0; i < numbers; i++) {
-      int pin = number_pins[i];
-      bool on = segment_numbers[number][i];
-      on ? turn_on(pin) : turn_off(pin);
-    }  
-};
-
-void fade_segments() {
-    for(int i=0; i <  sizeof(segment_pins)/sizeof(int); i++) {
-      turn_off(segment_pins[i]);
+    for(int i=0; i < numbers; i++)
+    {
+        int pin = number_pins[i];
+        bool on = segment_numbers[number][i];
+        on ? turn_on(pin) : turn_off(pin);
     }
 };
 
-void turn_on(int pin) {
-  digitalWrite(pin, HIGH);
-  if (print_pins) {
-      Serial << "Turn ON pin: " << pin << "\n";
-  }
+void fade_segments()
+{
+    for(int i=0; i <  sizeof(segment_pins)/sizeof(int); i++)
+    {
+        turn_off(segment_pins[i]);
+    }
 };
 
-void turn_off(int pin) {
-  digitalWrite(pin, LOW);
-  if (print_pins) {
-      Serial << "Turn OFF pin: " << pin << "\n";
-  }
+void turn_on(int pin)
+{
+    digitalWrite(pin, HIGH);
+    if (print_pins)
+    {
+        Serial << "Turn ON pin: " << pin << "\n";
+    }
 };
 
-void beep() {
+void turn_off(int pin)
+{
+    digitalWrite(pin, LOW);
+    if (print_pins)
+    {
+        Serial << "Turn OFF pin: " << pin << "\n";
+    }
+};
+
+void beep()
+{
 };
