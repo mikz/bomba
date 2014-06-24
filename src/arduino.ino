@@ -10,9 +10,9 @@ const bool print_blink = false;
 const bool print_number = false;
 
 // configuration of output/input pins
-const int segment_pins[6] = { 2, 3, 4, 5, 6, 1 };
-const int number_pins[7] = { 7, 8, 9, 10, 11, 12, 13 };
-const int button_pins[6] = { A0, A1, A2, A3, A4, A5 };
+const int segment_pins[] = { 2, 3, 4, 5, 6, 1 };
+const int number_pins[] = { 7, 8, 9, 10, 11, 12, 13 };
+const int button_pins[] = { A0, A1, A2, A3, A4, A5 };
 
 const int siren_pin = 0;
 
@@ -45,7 +45,7 @@ int current_button = 0;
 int display[6];
 unsigned long boot;
 
-const byte segment_numbers[10][7] =
+const byte segment_numbers[][7] =
 {
     { 1,1,1,1,1,1,0 },  // = 0
     { 0,1,1,0,0,0,0 },  // = 1
