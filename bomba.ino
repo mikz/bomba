@@ -1,7 +1,17 @@
 // (minutes * 60 + seconds) * 1000 = time in miliseconds
-const unsigned long timer = (10L * 60L + 20L) * 1000L;
+const unsigned long timer_minutes = 30L;
+const unsigned long timer_seconds = 10L;
+const unsigned long wrong_code_penalty_minutes = 20L;
+const int valid_code[] = {1,2,3,4,5,6};
 
-const int code[] = {1,2,3,4,5,6};
+// blinking after bomb explodes
+const int blink_pause = 300; // turned off delay
+const int blink_multiplex_rate = 2000; // how many iterations before pause
+const int beep_after_explode = 3;
+
+// multiplex rate controls how many times to rotate between segments before updating displayed number
+const int multiplex_rate = 2000;
+const int button_read_freq = 5;
 
 // controls wether to print debugging info to serial port
 const bool print_pins = false;
@@ -11,6 +21,7 @@ const bool print_clock = false;
 const bool print_segment = false;
 const bool print_blink = false;
 const bool print_number = false;
+const bool print_code = false;
 
 // configuration of output/input pins
 const int segment_pins[] = { 2, 3, 4, 5, 6, 1 };
@@ -19,27 +30,25 @@ const int button_pins[] = { A0, A1, A2, A3, A4, A5 };
 
 const int siren_pin = 0;
 
-// multiplex rate controls how many times to rotate between segments before updating displayed number
-const int multiplex_rate = 2000;
-
-const int button_read_freq = multiplex_rate/500;
-
-// blinking after bomb explodes
-const int blink_pause = 300; // turned off delay
-const int blink_multiplex_rate = 2000; // how many iterations before pause
-
 // help vars below
 bool ticking = false;
+bool armed = true;
 bool started = false;
 
-const bool serial = print_pins || print_buttons || print_clock || print_segment || print_blink || print_number || print_raw_buttons;
+const bool serial = print_pins || print_buttons || print_clock || print_segment || print_blink || print_number || print_raw_buttons || print_code;
+
+const unsigned long timer = (timer_minutes * 60L + timer_seconds) * 1000L;
 
 const int buttons = sizeof(button_pins)/sizeof(int);
 const int segments = sizeof(segment_pins)/sizeof(int);
 const int numbers = sizeof(number_pins)/sizeof(int);
+const int code_size = sizeof(valid_code)/sizeof(int);
 
-int button_values[buttons] = {};
 int last_button_values[buttons] = {};
+int code_position = 0;
+int explode_beeps = 0;
+
+unsigned long penalty = 0;
 
 unsigned long remaining = timer;
 
@@ -135,6 +144,7 @@ void wait_for_start()
 
     started = true;
     ticking = true;
+    armed = true;
 };
 
 void tick()
@@ -153,9 +163,12 @@ void tick()
     else
     {
         multiplex(blink_multiplex_rate);
-        beepStart();
+	if (armed && explode_beeps++ < beep_after_explode) {
+		beepStart();
+	}
+
         blink();
-        beepEnd();
+	if (armed) beepEnd();
     }
 };
 
@@ -190,7 +203,7 @@ void update_clock(int first, int second, int third)
 
 unsigned long elapsed()
 {
-    return millis() - boot;
+    return millis() - boot + penalty;
 };
 
 void update()
@@ -299,6 +312,40 @@ int read_button(int button)
     return value;
 };
 
+void wrong_code_penalty()
+{
+	penalty += wrong_code_penalty_minutes * 60L * 1000L;
+}
+
+void try_code(int number)
+{
+	bool valid;
+	int expected = valid_code[code_position++];
+
+	if (print_code)
+	{
+		Serial << "Expected code: " << expected << ", got: " << number << "\n";
+	}
+
+	valid = expected == number;
+
+	
+	if (!valid)
+	{
+		beep(1000);
+		code_position = 0;
+		wrong_code_penalty();
+		return;
+	}
+
+
+	if (code_position == code_size) {
+		ticking = false;
+		armed = false;
+	}
+
+};
+
 void multiplex(int rate)
 {
     for(int i=0; i < rate; i++)
@@ -307,7 +354,7 @@ void multiplex(int rate)
         current_segment = next_segment();
 
         // +1 for not reading buttons on every first call
-        if((i+1)%button_read_freq == 0)
+        if((i+1)%button_read_freq == 0 && ticking)
         {
 
             int number = read_next_button();
@@ -320,6 +367,8 @@ void multiplex(int rate)
                 }
 
                 beep(10);
+
+		try_code(number);
             }
         }
 
@@ -383,6 +432,7 @@ void turn_off(int pin)
 void beep(int pause)
 {
     beepStart();
+    fade_segments();
     delay(pause);
     beepEnd();
 
