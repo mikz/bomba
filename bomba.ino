@@ -167,12 +167,18 @@ void tick()
     else
     {
         multiplex(blink_multiplex_rate);
-	if (armed && explode_beeps++ < beep_after_explode) {
-		beepStart();
-	}
+
+        if (armed && explode_beeps++ < beep_after_explode)
+        {
+            beepStart();
+        }
 
         blink();
-	if (armed) beepEnd();
+
+        if (armed)
+        {
+            beepEnd();
+        }
     }
 };
 
@@ -325,49 +331,51 @@ int read_button(int button)
 
 void wrong_code_penalty()
 {
-	penalty += wrong_code_penalty_minutes * 60L * 1000L;
+    penalty += wrong_code_penalty_minutes * 60L * 1000L;
 }
 
 void reset_code()
 {
-		code_position = 0;
-		beep(200);
-		delay(200);
-		beep(200);
-		return;
+    code_position = 0;
+    beep(200);
+    delay(200);
+    beep(200);
+    return;
 }
 
 void try_code(int number)
 {
-	if (number == 11 || number == 10) {
-		return reset_code();
-		
-	}
+    if (number == 11 || number == 10)
+    {
+        return reset_code();
 
-	bool valid;
-	int expected = valid_code[code_position++];
+    }
 
-	if (print_code)
-	{
-		Serial << "Expected code: " << expected << ", got: " << number << "\n";
-	}
+    bool valid;
+    int expected = valid_code[code_position++];
 
-	valid = expected == number;
+    if (print_code)
+    {
+        Serial << "Expected code: " << expected << ", got: " << number << "\n";
+    }
 
-	
-	if (!valid)
-	{
-		beep(1000);
-		code_position = 0;
-		wrong_code_penalty();
-		return;
-	}
+    valid = expected == number;
 
 
-	if (code_position == code_size) {
-		ticking = false;
-		armed = false;
-	}
+    if (!valid)
+    {
+        beep(1000);
+        code_position = 0;
+        wrong_code_penalty();
+        return;
+    }
+
+
+    if (code_position == code_size)
+    {
+        ticking = false;
+        armed = false;
+    }
 
 };
 
@@ -393,7 +401,7 @@ void multiplex(int rate)
 
                 beep(10);
 
-		try_code(number);
+                try_code(number);
             }
         }
 
