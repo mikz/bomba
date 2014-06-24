@@ -1,7 +1,7 @@
 // (minutes * 60 + seconds) * 1000 = time in miliseconds
 const unsigned long timer = (10L * 60L + 20L) * 1000L;
 
-const int[] code = {1,2,3,4,5,6};
+const int code[] = {1,2,3,4,5,6};
 
 // controls wether to print debugging info to serial port
 const bool print_pins = false;
@@ -29,8 +29,8 @@ const int blink_pause = 300; // turned off delay
 const int blink_multiplex_rate = 2000; // how many iterations before pause
 
 // help vars below
-bool ticking = true;
-bool started = true;
+bool ticking = false;
+bool started = false;
 
 const bool serial = print_pins || print_buttons || print_clock || print_segment || print_blink || print_number || print_raw_buttons;
 
@@ -124,8 +124,17 @@ void loop()
 
 void wait_for_start()
 {
-    started = true;
+    int button;
 
+    do
+    {
+        multiplex(1);
+        button = read_next_button();
+    }
+    while (button == -1);
+
+    started = true;
+    ticking = true;
 };
 
 void tick()
@@ -297,11 +306,11 @@ void multiplex(int rate)
         show_segment(current_segment);
         current_segment = next_segment();
 
-        if(i%button_read_freq == 0)
+        // +1 for not reading buttons on every first call
+        if((i+1)%button_read_freq == 0)
         {
 
             int number = read_next_button();
-
 
             if (number >= 0)
             {
