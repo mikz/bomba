@@ -1,9 +1,12 @@
 // (minutes * 60 + seconds) * 1000 = time in miliseconds
-const unsigned long timer = (0L * 60L + 10L) * 1000L;
+const unsigned long timer = (10L * 60L + 20L) * 1000L;
+
+const int[] code = {1,2,3,4,5,6};
 
 // controls wether to print debugging info to serial port
 const bool print_pins = false;
-const bool print_buttons = true;
+const bool print_buttons = false;
+const bool print_raw_buttons = false;
 const bool print_clock = false;
 const bool print_segment = false;
 const bool print_blink = false;
@@ -19,7 +22,7 @@ const int siren_pin = 0;
 // multiplex rate controls how many times to rotate between segments before updating displayed number
 const int multiplex_rate = 2000;
 
-const int button_read_freq = multiplex_rate/2;
+const int button_read_freq = multiplex_rate/500;
 
 // blinking after bomb explodes
 const int blink_pause = 300; // turned off delay
@@ -29,13 +32,14 @@ const int blink_multiplex_rate = 2000; // how many iterations before pause
 bool ticking = true;
 bool started = true;
 
-const bool serial = print_pins || print_buttons || print_clock || print_segment || print_blink || print_number;
+const bool serial = print_pins || print_buttons || print_clock || print_segment || print_blink || print_number || print_raw_buttons;
 
 const int buttons = sizeof(button_pins)/sizeof(int);
 const int segments = sizeof(segment_pins)/sizeof(int);
 const int numbers = sizeof(number_pins)/sizeof(int);
 
 int button_values[buttons] = {};
+int last_button_values[buttons] = {};
 
 unsigned long remaining = timer;
 
@@ -59,6 +63,18 @@ const byte segment_numbers[][7] =
     { 1,1,1,0,0,1,1 }   // = 9
 };
 
+// ordered like button_pins
+// HIGH, LOW
+const int button_mapping[][2] =
+{
+    { 2, 1},
+    { 3, 4},
+    { 5, 6},
+    { 8, 7},
+    { 0, 9},
+    { 10, 11}
+};
+
 // enable Serial << streaming
 template<class T> inline Print &operator <<(Print &obj, T arg)
 {
@@ -74,6 +90,9 @@ void setup()
     }
 
     boot = millis();
+
+    pinMode(siren_pin, OUTPUT);
+    digitalWrite(siren_pin, LOW);
 
     for(int i=0; i < segments; i++)
     {
@@ -125,8 +144,9 @@ void tick()
     else
     {
         multiplex(blink_multiplex_rate);
-        beep();
+        beepStart();
         blink();
+        beepEnd();
     }
 };
 
@@ -216,18 +236,51 @@ void show_segment(int segment)
     turn_on(segment_pins[segment]);
 };
 
+int button_index(int value)
+{
+
+    if (value > 600 && value < 800)
+    {
+        return 1;
+    }
+
+    if (value > 900)
+    {
+        return 0;
+    }
+}
+bool button_pressed(int value)
+{
+    return value > 100;
+}
+
 int read_next_button()
 {
     int next_button = (current_button + 1) % buttons;
     current_button = next_button;
     int button_value = read_button(current_button);
+    int index;
+    int number = -1;
 
-    if (print_buttons)
+    if (print_raw_buttons)
     {
         Serial << "Button: " << current_button << " = " << button_value << "\n";
     }
 
-    return button_value;
+    if (button_pressed(button_value))
+    {
+        number = button_mapping[current_button][button_index(button_value)];
+    }
+
+    if (last_button_values[current_button] == number)
+    {
+        return -1;
+    }
+    else
+    {
+        last_button_values[current_button] = number;
+        return number;
+    }
 };
 
 int read_button(int button)
@@ -235,13 +288,6 @@ int read_button(int button)
     int pin = button_pins[button];
     int value = analogRead(pin);
     return value;
-};
-
-void read_buttons()
-{
-    // for(int j=0; j < buttons; j++) {
-    int value = read_next_button();
-    // }
 };
 
 void multiplex(int rate)
@@ -253,7 +299,19 @@ void multiplex(int rate)
 
         if(i%button_read_freq == 0)
         {
-            read_buttons();
+
+            int number = read_next_button();
+
+
+            if (number >= 0)
+            {
+                if (print_buttons)
+                {
+                    Serial << "Pressed number: " << number << "\n";
+                }
+
+                beep(10);
+            }
         }
 
     }
@@ -313,6 +371,20 @@ void turn_off(int pin)
     }
 };
 
-void beep()
+void beep(int pause)
 {
+    beepStart();
+    delay(pause);
+    beepEnd();
+
+}
+
+void beepStart()
+{
+    digitalWrite(siren_pin, HIGH);
+}
+
+void beepEnd()
+{
+    digitalWrite(siren_pin, LOW);
 };
